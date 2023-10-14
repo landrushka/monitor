@@ -1,8 +1,8 @@
 package storage
 
 type Storage interface {
-	UpdateGauge(n string, v float64) string
-	UpdateCounter(n string, v float64) string
+	UpdateGauge(n string, v float64)
+	UpdateCounter(n string, v int64)
 }
 
 type GaugeMetric map[string]float64
