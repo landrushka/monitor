@@ -17,7 +17,6 @@ func Middleware(next http.Handler) http.Handler {
 			http.Error(res, "Only POST requests", http.StatusMethodNotAllowed)
 			return
 		} else {
-
 			next.ServeHTTP(res, req)
 		}
 

@@ -15,7 +15,7 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.Handle(`/update/guage/`, handlers.Middleware(http.HandlerFunc(UpdateGuage)))
-	mux.Handle(`/update/counter/"`, handlers.Middleware(http.HandlerFunc(UpdateCounter)))
+	mux.Handle(`/update/counter/`, handlers.Middleware(http.HandlerFunc(UpdateCounter)))
 	mux.HandleFunc(`/update/`, BadRequest)
 
 	err := http.ListenAndServe(`:8080`, mux)
@@ -53,7 +53,7 @@ func UpdateCounter(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusNotFound)
 		return
 	}
-	val, _ := strconv.ParseInt(strings.TrimSpace(splittedPath[4]), 64, 64)
+	val, _ := strconv.ParseInt(strings.TrimSpace(splittedPath[4]), 10, 64)
 	MemStorage.UpdateCounter(splittedPath[3], val)
 	res.WriteHeader(http.StatusOK)
 }

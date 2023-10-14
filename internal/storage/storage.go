@@ -14,14 +14,10 @@ type MemStorage struct {
 }
 
 func (gm MemStorage) UpdateGuage(n string, v float64) {
-	val, ok := gm.GuageMetric[n]
+	_, ok := gm.GuageMetric[n]
 	if ok {
-		println("exist")
-		println(val)
 		gm.GuageMetric[n] = v
 	} else {
-		println(v)
-		println(n)
 		gm.GuageMetric[n] = v
 	}
 }
@@ -29,16 +25,8 @@ func (gm MemStorage) UpdateGuage(n string, v float64) {
 func (cm MemStorage) UpdateCounter(n string, v int64) {
 	val, ok := cm.CounterMetric[n]
 	if ok {
-		println("exist")
-		println(val)
-		cm.CounterMetric[n] = cm.CounterMetric[n] + v
+		cm.CounterMetric[n] = val + v
 	} else {
-		println(v)
-		println(n)
 		cm.CounterMetric[n] = v
 	}
-}
-
-func main() {
-
 }
