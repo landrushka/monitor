@@ -36,7 +36,11 @@ func UpdateGuage(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusNotFound)
 		return
 	}
-	val, _ := strconv.ParseFloat(strings.TrimSpace(splittedPath[4]), 64)
+	val, err := strconv.ParseFloat(strings.TrimSpace(splittedPath[4]), 64)
+	if err != nil {
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
 	MemStorage.UpdateGuage(splittedPath[3], val)
 	res.WriteHeader(http.StatusOK)
 }
@@ -53,7 +57,11 @@ func UpdateCounter(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusNotFound)
 		return
 	}
-	val, _ := strconv.ParseInt(strings.TrimSpace(splittedPath[4]), 10, 64)
+	val, err := strconv.ParseInt(strings.TrimSpace(splittedPath[4]), 10, 64)
+	if err != nil {
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
 	MemStorage.UpdateCounter(splittedPath[3], val)
 	res.WriteHeader(http.StatusOK)
 }
