@@ -1,24 +1,24 @@
 package storage
 
 type Storage interface {
-	UpdateGuage(n string, v float64) string
+	UpdateGauge(n string, v float64) string
 	UpdateCounter(n string, v float64) string
 }
 
-type GuageMetric map[string]float64
+type GaugeMetric map[string]float64
 type CounterMetric map[string]int64
 
 type MemStorage struct {
-	GuageMetric   GuageMetric
+	GaugeMetric   GaugeMetric
 	CounterMetric CounterMetric
 }
 
-func (gm MemStorage) UpdateGuage(n string, v float64) {
-	_, ok := gm.GuageMetric[n]
+func (gm MemStorage) UpdateGauge(n string, v float64) {
+	_, ok := gm.GaugeMetric[n]
 	if ok {
-		gm.GuageMetric[n] = v
+		gm.GaugeMetric[n] = v
 	} else {
-		gm.GuageMetric[n] = v
+		gm.GaugeMetric[n] = v
 	}
 }
 

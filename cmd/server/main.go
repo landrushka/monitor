@@ -9,12 +9,12 @@ import (
 	"github.com/landrushka/monitor.git/internal/handlers"
 )
 
-var MemStorage = storage.MemStorage{GuageMetric: make(storage.GuageMetric), CounterMetric: make(storage.CounterMetric)}
+var MemStorage = storage.MemStorage{GaugeMetric: make(storage.GaugeMetric), CounterMetric: make(storage.CounterMetric)}
 
 func main() {
 
 	mux := http.NewServeMux()
-	mux.Handle(`/update/guage/`, handlers.Middleware(http.HandlerFunc(UpdateGuage)))
+	mux.Handle(`/update/gauge/`, handlers.Middleware(http.HandlerFunc(UpdateGauge)))
 	mux.Handle(`/update/counter/`, handlers.Middleware(http.HandlerFunc(UpdateCounter)))
 	mux.HandleFunc(`/update/`, BadRequest)
 
@@ -24,7 +24,7 @@ func main() {
 	}
 }
 
-func UpdateGuage(res http.ResponseWriter, req *http.Request) {
+func UpdateGauge(res http.ResponseWriter, req *http.Request) {
 	path := req.URL.Path
 	splittedPath := strings.Split(path, "/")
 	// idx=2 -> type
@@ -41,7 +41,7 @@ func UpdateGuage(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	MemStorage.UpdateGuage(splittedPath[3], val)
+	MemStorage.UpdateGauge(splittedPath[3], val)
 	res.WriteHeader(http.StatusOK)
 }
 
