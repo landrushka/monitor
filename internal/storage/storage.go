@@ -13,20 +13,20 @@ type MemStorage struct {
 	CounterMetric CounterMetric
 }
 
-func (gm MemStorage) UpdateGauge(n string, v float64) {
-	_, ok := gm.GaugeMetric[n]
+func (ms MemStorage) UpdateGauge(n string, v float64) {
+	_, ok := ms.GaugeMetric[n]
 	if ok {
-		gm.GaugeMetric[n] = v
+		ms.GaugeMetric[n] = v
 	} else {
-		gm.GaugeMetric[n] = v
+		ms.GaugeMetric[n] = v
 	}
 }
 
-func (cm MemStorage) UpdateCounter(n string, v int64) {
-	val, ok := cm.CounterMetric[n]
+func (ms MemStorage) UpdateCounter(n string, v int64) {
+	val, ok := ms.CounterMetric[n]
 	if ok {
-		cm.CounterMetric[n] = val + v
+		ms.CounterMetric[n] = val + v
 	} else {
-		cm.CounterMetric[n] = v
+		ms.CounterMetric[n] = v
 	}
 }

@@ -66,6 +66,6 @@ func UpdateCounter(res http.ResponseWriter, req *http.Request) {
 	res.WriteHeader(http.StatusOK)
 }
 
-func BadRequest(res http.ResponseWriter, req *http.Request) {
+func BadRequest(res http.ResponseWriter, _ *http.Request) {
 	res.WriteHeader(http.StatusBadRequest)
 }
