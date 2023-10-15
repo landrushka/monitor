@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const BaseUrl = `localhost:8080`
+const BaseURL = `http://localhost:8080`
 const pollInterval = 2
 
 //const reportInterval = 10
@@ -89,14 +89,14 @@ func (sf statsFloat) getGaugeMetrics() {
 }
 
 func makeGaugeRequest(metricName string, metricValue float64) (*http.Request, error) {
-	url := BaseUrl + "/update/gauge/" + metricName + "/" + fmt.Sprintf("%.2f", metricValue)
+	url := BaseURL + "/update/gauge/" + metricName + "/" + fmt.Sprintf("%.2f", metricValue)
 	req, err := http.NewRequest("POST", url, nil)
 	req.Header.Add("Content-Type", "text/plain")
 	return req, err
 }
 
 func makeCounterRequest(metricName string, metricValue int64) (*http.Request, error) {
-	url := BaseUrl + "/update/counter/" + metricName + "/" + strconv.FormatInt(metricValue, 10)
+	url := BaseURL + "/update/counter/" + metricName + "/" + strconv.FormatInt(metricValue, 10)
 	req, err := http.NewRequest("POST", url, nil)
 	req.Header.Add("Content-Type", "text/plain")
 	return req, err
