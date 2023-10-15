@@ -40,7 +40,10 @@ func main() {
 				if err != nil {
 					// handle error
 				}
-				defer resp.Body.Close()
+				err = resp.Body.Close()
+				if err != nil {
+					return
+				}
 			}
 			for name, value := range si {
 				var req, _ = makeCounterRequest(name, value)
@@ -48,7 +51,10 @@ func main() {
 				if err != nil {
 					// handle error
 				}
-				defer resp.Body.Close()
+				err = resp.Body.Close()
+				if err != nil {
+					return
+				}
 			}
 		}
 
