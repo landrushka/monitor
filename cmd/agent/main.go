@@ -36,11 +36,19 @@ func main() {
 			count = 0
 			for name, value := range sf {
 				var req, _ = makeGaugeRequest(name, value)
-				_, _ = client.Do(req)
+				resp, err := client.Do(req)
+				if err != nil {
+					// handle error
+				}
+				defer resp.Body.Close()
 			}
 			for name, value := range si {
 				var req, _ = makeCounterRequest(name, value)
-				_, _ = client.Do(req)
+				resp, err := client.Do(req)
+				if err != nil {
+					// handle error
+				}
+				defer resp.Body.Close()
 			}
 		}
 
