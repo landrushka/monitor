@@ -43,7 +43,7 @@ var MemStorage = storage.MemStorage{GaugeMetric: make(storage.GaugeMetric), Coun
 func UpdateHandle(rw http.ResponseWriter, r *http.Request) {
 	typeName := strings.ToLower(chi.URLParam(r, "type"))
 	if typeName != "gauge" && typeName != "counter" {
-		http.Error(rw, "unknown type: "+typeName, http.StatusNotFound)
+		http.Error(rw, "unknown type: "+typeName, http.StatusBadRequest)
 	}
 	if typeName == "gauge" {
 		name := strings.ToLower(chi.URLParam(r, "name"))
