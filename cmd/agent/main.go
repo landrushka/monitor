@@ -2,14 +2,14 @@ package main
 
 import (
 	"fmt"
+	"github.com/go-resty/resty/v2"
 	"math/rand"
-	"net/http"
 	"runtime"
 	"strconv"
 	"time"
 )
 
-const BaseURL = `http://localhost:8080`
+const BaseURL = `http://localhost:8080/`
 const pollInterval = 2
 
 //const reportInterval = 10
@@ -20,8 +20,7 @@ type counter int64
 
 func main() {
 
-	// Create an HTTP client
-	client := &http.Client{}
+	client := resty.New()
 	sf := statsFloat{}
 	si := statsInt{}
 	count := counter(0)
@@ -29,25 +28,29 @@ func main() {
 	for {
 		time.Sleep(pollInterval * time.Second)
 		sf.getRandomMetrics()
-		sf.getRandomMetrics()
+		sf.getGaugeMetrics()
 		si.getCount()
 		count++
 		if count%5 == 0 {
 			count = 0
 			for name, value := range sf {
-				var req, _ = makeGaugeRequest(name, value)
-				resp, _ := client.Do(req)
-				err := resp.Body.Close()
+				_, err := client.R().SetPathParams(map[string]string{
+					"name":  name,
+					"value": fmt.Sprintf("%.2f", value),
+				}).SetHeader("Content-Type", "text/plain").
+					Post(BaseURL + "/gauge/{name}/{value}")
 				if err != nil {
-					return
+					panic(err)
 				}
 			}
 			for name, value := range si {
-				var req, _ = makeCounterRequest(name, value)
-				resp, _ := client.Do(req)
-				err := resp.Body.Close()
+				_, err := client.R().SetPathParams(map[string]string{
+					"name":  name,
+					"value": strconv.FormatInt(value, 10),
+				}).SetHeader("Content-Type", "text/plain").
+					Post(BaseURL + "/counter/{name}/{value}")
 				if err != nil {
-					return
+					panic(err)
 				}
 			}
 		}
@@ -94,18 +97,4 @@ func (sf statsFloat) getGaugeMetrics() {
 	sf["StackSys"] = float64(memStats.StackSys)
 	sf["Sys"] = float64(memStats.Sys)
 	sf["TotalAlloc"] = float64(memStats.TotalAlloc)
-}
-
-func makeGaugeRequest(metricName string, metricValue float64) (*http.Request, error) {
-	url := BaseURL + "/update/gauge/" + metricName + "/" + fmt.Sprintf("%.2f", metricValue)
-	req, err := http.NewRequest("POST", url, nil)
-	req.Header.Add("Content-Type", "text/plain")
-	return req, err
-}
-
-func makeCounterRequest(metricName string, metricValue int64) (*http.Request, error) {
-	url := BaseURL + "/update/counter/" + metricName + "/" + strconv.FormatInt(metricValue, 10)
-	req, err := http.NewRequest("POST", url, nil)
-	req.Header.Add("Content-Type", "text/plain")
-	return req, err
 }
