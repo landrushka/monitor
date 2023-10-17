@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"flag"
@@ -12,9 +12,10 @@ import (
 var targetHost string = "localhost:8080"
 
 func main() {
-	//serverFlags := flag.NewFlagSet("agent", flag.ExitOnError)
+	//serverFlags := flag.NewFlagSet("server", flag.ExitOnError)
 	flag.StringVar(&targetHost, "a", targetHost, "Target base host:port")
 	flag.Parse()
+	//serverFlags.Parse(os.Args[1:])
 	var memStorage = storage.MemStorage{GaugeMetric: make(storage.GaugeMetric), CounterMetric: make(storage.CounterMetric)}
 	h := handlers.NewHandler(memStorage)
 
