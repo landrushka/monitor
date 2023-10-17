@@ -9,7 +9,7 @@ import (
 	"net/http"
 )
 
-var targetHost string = "localhost:8080"
+var targetHost = ":8080"
 
 func main() {
 	//serverFlags := flag.NewFlagSet("server", flag.ExitOnError)
