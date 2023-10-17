@@ -32,5 +32,5 @@ func main() {
 		})
 	})
 
-	log.Fatal(http.ListenAndServe("http://"+*targetHost, r))
+	log.Fatal(http.ListenAndServe(*targetHost, r))
 }
