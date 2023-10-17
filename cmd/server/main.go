@@ -13,7 +13,7 @@ var targetHost = ":8080"
 
 func main() {
 	//serverFlags := flag.NewFlagSet("server", flag.ExitOnError)
-	targetHost := flag.String("a", ":8080", "Target base host:port")
+	targetHost := flag.String("a", "localhost:8080", "Target base host:port")
 	flag.Parse()
 	//serverFlags.Parse(os.Args[1:])
 	var memStorage = storage.MemStorage{GaugeMetric: make(storage.GaugeMetric), CounterMetric: make(storage.CounterMetric)}
@@ -32,5 +32,5 @@ func main() {
 		})
 	})
 
-	log.Fatal(http.ListenAndServe(*targetHost, r))
+	log.Fatal(http.ListenAndServe("http://"+*targetHost, r))
 }
