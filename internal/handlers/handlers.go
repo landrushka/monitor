@@ -38,67 +38,78 @@ func Middleware(next http.Handler) http.Handler {
 	})
 }
 
-var MemStorage = storage.MemStorage{GaugeMetric: make(storage.GaugeMetric), CounterMetric: make(storage.CounterMetric)}
+func NewHandler(memStorage storage.MemStorage) *Handler {
+	h := &Handler{
+		memStorage: memStorage,
+	}
+	return h
+}
 
-func UpdateHandle(rw http.ResponseWriter, r *http.Request) {
+type Handler struct {
+	memStorage storage.MemStorage
+}
+
+func (bh *Handler) UpdateHandle(rw http.ResponseWriter, r *http.Request) {
 	typeName := strings.ToLower(chi.URLParam(r, "type"))
 	if typeName != "gauge" && typeName != "counter" {
 		http.Error(rw, "unknown type: "+typeName, http.StatusBadRequest)
 	}
 	if typeName == "gauge" {
-		name := strings.ToLower(chi.URLParam(r, "name"))
+		name := chi.URLParam(r, "name")
 		value := strings.ToLower(chi.URLParam(r, "value"))
 		val, err := strconv.ParseFloat(strings.TrimSpace(value), 64)
 		if err != nil {
 			rw.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		MemStorage.UpdateGauge(name, val)
+		bh.memStorage.UpdateGauge(name, val)
 		rw.WriteHeader(http.StatusOK)
 	}
 	if typeName == "counter" {
-		name := strings.ToLower(chi.URLParam(r, "name"))
+		name := chi.URLParam(r, "name")
 		value := strings.ToLower(chi.URLParam(r, "value"))
 		val, err := strconv.ParseInt(strings.TrimSpace(value), 10, 64)
 		if err != nil {
 			rw.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		MemStorage.UpdateCounter(name, val)
+		bh.memStorage.UpdateCounter(name, val)
 		rw.WriteHeader(http.StatusOK)
 	}
 }
 
-func GetAllNamesHandle(rw http.ResponseWriter, r *http.Request) {
-	keys := make([]string, 0, len(MemStorage.GaugeMetric)+len(MemStorage.CounterMetric))
-	for k := range MemStorage.GaugeMetric {
+func (bh *Handler) GetAllNamesHandle(rw http.ResponseWriter, r *http.Request) {
+	keys := make([]string, 0, len(bh.memStorage.GaugeMetric)+len(bh.memStorage.CounterMetric))
+	for k := range bh.memStorage.GaugeMetric {
 		keys = append(keys, k)
 	}
-	for k := range MemStorage.CounterMetric {
+	for k := range bh.memStorage.CounterMetric {
 		keys = append(keys, k)
 	}
 	tmpl := template.Must(template.New("").Parse(nameListHTML))
 	_ = tmpl.Execute(rw, keys)
 }
 
-func GetValueHandle(rw http.ResponseWriter, r *http.Request) {
+func (bh *Handler) GetValueHandle(rw http.ResponseWriter, r *http.Request) {
 	typeName := strings.ToLower(chi.URLParam(r, "type"))
-	nameName := strings.ToLower(chi.URLParam(r, "name"))
+	nameName := chi.URLParam(r, "name")
 	if typeName == "gauge" {
-		val, err := MemStorage.GaugeMetric[nameName]
-		if err {
+		val, ok := bh.memStorage.GaugeMetric[nameName]
+		if ok {
+			_, _ = rw.Write(Float64ToByte(val))
+		} else {
 			http.Error(rw, "unknown name: "+typeName, http.StatusNotFound)
 		}
-		_, _ = rw.Write(Float64ToByte(val))
-		rw.WriteHeader(http.StatusOK)
+
 	}
 	if typeName == "counter" {
-		val, err := MemStorage.CounterMetric[nameName]
-		if err {
+		val, ok := bh.memStorage.CounterMetric[nameName]
+		if ok {
+			_, _ = rw.Write([]byte(strconv.FormatInt(val, 10)))
+		} else {
 			http.Error(rw, "unknown name: "+typeName, http.StatusNotFound)
 		}
-		_, _ = rw.Write([]byte(strconv.FormatInt(val, 10)))
-		rw.WriteHeader(http.StatusOK)
+
 	}
 }
 
