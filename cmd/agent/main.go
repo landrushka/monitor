@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-var targetHost = `http://localhost:8080/`
+var targetHost = `http://localhost:8080`
 var pollInterval int64 = 2
 var reportInterval int64 = 10
 
