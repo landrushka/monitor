@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/caarlos0/env/v6"
 	"github.com/go-resty/resty/v2"
 	"math/rand"
 	"runtime"
@@ -10,18 +11,26 @@ import (
 	"time"
 )
 
-var targetHost = `http://localhost:8080`
-var pollInterval int64 = 2
-var reportInterval int64 = 10
+var targetHost string
+var pollInterval int64
+var reportInterval int64
 
 type statsFloat map[string]float64
 type statsInt map[string]int64
 
+type Config struct {
+	targetHost     string `env:"ADDRESS" envDefault:"http://localhost:8080"`
+	reportInterval int64  `env:"REPORT_INTERVAL" envDefault:"2"`
+	pollInterval   int64  `env:"POLL_INTERVAL" envDefault:"10"`
+}
+
 func main() {
+	var cfg Config
+	_ = env.Parse(&cfg)
 	//agentFlags := flag.NewFlagSet("agent", flag.ExitOnError)
-	flag.StringVar(&targetHost, "a", targetHost, "Target base host:port")
-	flag.Int64Var(&reportInterval, "r", reportInterval, "Report interval in sec")
-	flag.Int64Var(&pollInterval, "p", pollInterval, "Poll interval in sec")
+	flag.StringVar(&targetHost, "a", cfg.targetHost, "Target base host:port")
+	flag.Int64Var(&reportInterval, "r", cfg.reportInterval, "Report interval in sec")
+	flag.Int64Var(&pollInterval, "p", cfg.pollInterval, "Poll interval in sec")
 	flag.Parse()
 	client := resty.New()
 	sf := statsFloat{}

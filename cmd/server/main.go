@@ -2,18 +2,27 @@ package main
 
 import (
 	"flag"
+	"github.com/caarlos0/env/v6"
 	"github.com/go-chi/chi/v5"
 	"github.com/landrushka/monitor.git/internal/handlers"
 	"github.com/landrushka/monitor.git/internal/storage"
 	"log"
 	"net/http"
+	"os"
 )
 
-var targetHost = ":8080"
+var targetHost string
+
+type Config struct {
+	targetHost string `env:"ADDRESS" envDefault:":8080"`
+}
 
 func main() {
 	//serverFlags := flag.NewFlagSet("server", flag.ExitOnError)
-	targetHost := flag.String("a", "localhost:8080", "Target base host:port")
+	var cfg Config
+	_ = env.Parse(&cfg)
+	targetHost = os.Getenv("ADDRESS")
+	flag.StringVar(&targetHost, "a", cfg.targetHost, "Target base host:port")
 	flag.Parse()
 	//serverFlags.Parse(os.Args[1:])
 	var memStorage = storage.MemStorage{GaugeMetric: make(storage.GaugeMetric), CounterMetric: make(storage.CounterMetric)}
@@ -32,5 +41,5 @@ func main() {
 		})
 	})
 
-	log.Fatal(http.ListenAndServe(*targetHost, r))
+	log.Fatal(http.ListenAndServe(targetHost, r))
 }
