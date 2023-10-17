@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"runtime"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -45,6 +46,9 @@ func main() {
 		count += cfg.PollInterval
 		if count/cfg.ReportInterval >= 1 {
 			count -= cfg.ReportInterval
+			if !strings.Contains(cfg.TargetHost, "http://") {
+				cfg.TargetHost = "http://" + cfg.TargetHost
+			}
 			for name, value := range sf {
 				_, err := client.R().SetPathParams(map[string]string{
 					"name":  name,
@@ -56,6 +60,9 @@ func main() {
 				}
 			}
 			for name, value := range si {
+				if !strings.Contains(cfg.TargetHost, "http://") {
+					cfg.TargetHost = "http://" + cfg.TargetHost
+				}
 				_, err := client.R().SetPathParams(map[string]string{
 					"name":  name,
 					"value": strconv.FormatInt(value, 10),
