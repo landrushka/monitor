@@ -33,9 +33,9 @@ func main() {
 		sf.getRandomMetrics()
 		sf.getGaugeMetrics()
 		si.getCount()
-		count++
-		if count%reportInterval == 0 {
-			count = 0
+		count += pollInterval
+		if count/reportInterval >= 1 {
+			count -= reportInterval
 			for name, value := range sf {
 				_, err := client.R().SetPathParams(map[string]string{
 					"name":  name,
