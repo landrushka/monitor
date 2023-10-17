@@ -96,7 +96,7 @@ func (bh *Handler) GetValueHandle(rw http.ResponseWriter, r *http.Request) {
 	if typeName == "gauge" {
 		val, ok := bh.memStorage.GaugeMetric[nameName]
 		if ok {
-			_, _ = rw.Write([]byte(fmt.Sprintf("%.2f", val)))
+			_, _ = rw.Write([]byte(fmt.Sprintf("%.3f", val)))
 		} else {
 			http.Error(rw, "unknown name: "+typeName, http.StatusNotFound)
 		}
