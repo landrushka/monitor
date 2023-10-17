@@ -10,19 +10,19 @@ import (
 	"net/http"
 )
 
-var targetHost string
-
 type Config struct {
-	TargetHost string `env:"ADDRES" envDefault:":8080"`
+	TargetHost string `env:"ADDRES"`
 }
+
+var cfg Config
 
 func main() {
 	//serverFlags := flag.NewFlagSet("server", flag.ExitOnError)
-	cfg := Config{}
+	flag.StringVar(&cfg.TargetHost, "a", ":8080", "Target base host:port")
+	flag.Parse()
+
 	_ = env.Parse(&cfg)
 
-	flag.StringVar(&targetHost, "a", cfg.TargetHost, "Target base host:port")
-	flag.Parse()
 	//serverFlags.Parse(os.Args[1:])
 	var memStorage = storage.MemStorage{GaugeMetric: make(storage.GaugeMetric), CounterMetric: make(storage.CounterMetric)}
 	h := handlers.NewHandler(memStorage)
@@ -40,5 +40,5 @@ func main() {
 		})
 	})
 
-	log.Fatal(http.ListenAndServe(targetHost, r))
+	log.Fatal(http.ListenAndServe(cfg.TargetHost, r))
 }

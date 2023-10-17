@@ -11,46 +11,46 @@ import (
 	"time"
 )
 
-var targetHost string
-var pollInterval int64
-var reportInterval int64
-
 type statsFloat map[string]float64
 type statsInt map[string]int64
 
 type Config struct {
-	TargetHost     string `env:"ADDRESS" envDefault:"http://localhost:8080"`
-	ReportInterval int64  `env:"REPORT_INTERVAL" envDefault:"2"`
-	PollInterval   int64  `env:"POLL_INTERVAL" envDefault:"10"`
+	TargetHost     string `env:"ADDRESS"`
+	ReportInterval int64  `env:"REPORT_INTERVAL"`
+	PollInterval   int64  `env:"POLL_INTERVAL"`
 }
 
+var cfg Config
+
 func main() {
-	var cfg Config
-	_ = env.Parse(&cfg)
+
 	//agentFlags := flag.NewFlagSet("agent", flag.ExitOnError)
-	flag.StringVar(&targetHost, "a", cfg.TargetHost, "Target base host:port")
-	flag.Int64Var(&reportInterval, "r", cfg.ReportInterval, "Report interval in sec")
-	flag.Int64Var(&pollInterval, "p", cfg.PollInterval, "Poll interval in sec")
+	flag.StringVar(&cfg.TargetHost, "a", "http://localhost:8080", "Target base host:port")
+	flag.Int64Var(&cfg.ReportInterval, "r", 2, "Report interval in sec")
+	flag.Int64Var(&cfg.PollInterval, "p", 10, "Poll interval in sec")
 	flag.Parse()
+
+	_ = env.Parse(&cfg)
+
 	client := resty.New()
 	sf := statsFloat{}
 	si := statsInt{}
 	count := int64(0)
 
 	for {
-		time.Sleep(time.Duration(pollInterval) * time.Second)
+		time.Sleep(time.Duration(cfg.PollInterval) * time.Second)
 		sf.getRandomMetrics()
 		sf.getGaugeMetrics()
 		si.getCount()
-		count += pollInterval
-		if count/reportInterval >= 1 {
-			count -= reportInterval
+		count += cfg.PollInterval
+		if count/cfg.ReportInterval >= 1 {
+			count -= cfg.ReportInterval
 			for name, value := range sf {
 				_, err := client.R().SetPathParams(map[string]string{
 					"name":  name,
 					"value": fmt.Sprintf("%.2f", value),
 				}).SetHeader("Content-Type", "text/plain").
-					Post(targetHost + "/gauge/{name}/{value}")
+					Post(cfg.TargetHost + "/gauge/{name}/{value}")
 				if err != nil {
 					panic(err)
 				}
@@ -60,7 +60,7 @@ func main() {
 					"name":  name,
 					"value": strconv.FormatInt(value, 10),
 				}).SetHeader("Content-Type", "text/plain").
-					Post(targetHost + "/counter/{name}/{value}")
+					Post(cfg.TargetHost + "/counter/{name}/{value}")
 				if err != nil {
 					panic(err)
 				}
