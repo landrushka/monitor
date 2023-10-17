@@ -11,7 +11,7 @@ import (
 )
 
 type Config struct {
-	TargetHost string `env:"ADDRES"`
+	TargetHost string `env:"ADDRESS"`
 }
 
 var cfg Config
