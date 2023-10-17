@@ -95,7 +95,7 @@ func (bh *Handler) GetValueHandle(rw http.ResponseWriter, r *http.Request) {
 		if ok {
 			_, _ = rw.Write([]byte(strconv.FormatFloat(val, 'f', -1, 64)))
 		} else {
-			http.Error(rw, "unknown name: "+typeName, http.StatusNotFound)
+			http.Error(rw, "unknown name: "+nameName, http.StatusNotFound)
 		}
 
 	}
@@ -104,7 +104,7 @@ func (bh *Handler) GetValueHandle(rw http.ResponseWriter, r *http.Request) {
 		if ok {
 			_, _ = rw.Write([]byte(strconv.FormatInt(val, 10)))
 		} else {
-			http.Error(rw, "unknown name: "+typeName, http.StatusNotFound)
+			http.Error(rw, "unknown name: "+nameName, http.StatusNotFound)
 		}
 
 	}

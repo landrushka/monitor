@@ -50,7 +50,7 @@ func main() {
 					"name":  name,
 					"value": fmt.Sprintf("%.2f", value),
 				}).SetHeader("Content-Type", "text/plain").
-					Post(cfg.TargetHost + "/gauge/{name}/{value}")
+					Post(cfg.TargetHost + "/update/gauge/{name}/{value}")
 				if err != nil {
 					panic(err)
 				}
@@ -60,7 +60,7 @@ func main() {
 					"name":  name,
 					"value": strconv.FormatInt(value, 10),
 				}).SetHeader("Content-Type", "text/plain").
-					Post(cfg.TargetHost + "/counter/{name}/{value}")
+					Post(cfg.TargetHost + "/update/counter/{name}/{value}")
 				if err != nil {
 					panic(err)
 				}
