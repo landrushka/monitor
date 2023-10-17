@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"github.com/go-chi/chi/v5"
 	"github.com/landrushka/monitor.git/internal/handlers"
 	"github.com/landrushka/monitor.git/internal/storage"
@@ -8,7 +9,11 @@ import (
 	"net/http"
 )
 
+var targetHost string = "localhost:8080"
+
 func main() {
+	serverFlags := flag.NewFlagSet("agent", flag.ExitOnError)
+	serverFlags.StringVar(&targetHost, "a", targetHost, "Target base host:port")
 	var memStorage = storage.MemStorage{GaugeMetric: make(storage.GaugeMetric), CounterMetric: make(storage.CounterMetric)}
 	h := handlers.NewHandler(memStorage)
 
@@ -25,5 +30,5 @@ func main() {
 		})
 	})
 
-	log.Fatal(http.ListenAndServe(":8080", r))
+	log.Fatal(http.ListenAndServe(targetHost, r))
 }

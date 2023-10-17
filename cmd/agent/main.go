@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/go-resty/resty/v2"
 	"math/rand"
@@ -9,36 +10,38 @@ import (
 	"time"
 )
 
-const BaseURL = `http://localhost:8080/`
-const pollInterval = 2
-
-//const reportInterval = 10
+var targetHost = `http://localhost:8080/`
+var pollInterval int64 = 2
+var reportInterval int64 = 10
 
 type statsFloat map[string]float64
 type statsInt map[string]int64
-type counter int64
 
 func main() {
-
+	agentFlags := flag.NewFlagSet("agent", flag.ExitOnError)
+	agentFlags.StringVar(&targetHost, "a", targetHost, "Target base host:port")
+	agentFlags.Int64Var(&reportInterval, "r", reportInterval, "Report interval in sec")
+	agentFlags.Int64Var(&pollInterval, "p", pollInterval, "Poll interval in sec")
+	flag.Parse()
 	client := resty.New()
 	sf := statsFloat{}
 	si := statsInt{}
-	count := counter(0)
+	count := int64(0)
 
 	for {
-		time.Sleep(pollInterval * time.Second)
+		time.Sleep(time.Duration(pollInterval) * time.Second)
 		sf.getRandomMetrics()
 		sf.getGaugeMetrics()
 		si.getCount()
 		count++
-		if count%5 == 0 {
+		if count%reportInterval == 0 {
 			count = 0
 			for name, value := range sf {
 				_, err := client.R().SetPathParams(map[string]string{
 					"name":  name,
 					"value": fmt.Sprintf("%.2f", value),
 				}).SetHeader("Content-Type", "text/plain").
-					Post(BaseURL + "/gauge/{name}/{value}")
+					Post(targetHost + "/gauge/{name}/{value}")
 				if err != nil {
 					panic(err)
 				}
@@ -48,7 +51,7 @@ func main() {
 					"name":  name,
 					"value": strconv.FormatInt(value, 10),
 				}).SetHeader("Content-Type", "text/plain").
-					Post(BaseURL + "/counter/{name}/{value}")
+					Post(targetHost + "/counter/{name}/{value}")
 				if err != nil {
 					panic(err)
 				}
