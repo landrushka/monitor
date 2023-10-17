@@ -8,21 +8,20 @@ import (
 	"github.com/landrushka/monitor.git/internal/storage"
 	"log"
 	"net/http"
-	"os"
 )
 
 var targetHost string
 
 type Config struct {
-	targetHost string `env:"ADDRESS" envDefault:":8080"`
+	TargetHost string `env:"ADDRES" envDefault:":8080"`
 }
 
 func main() {
 	//serverFlags := flag.NewFlagSet("server", flag.ExitOnError)
-	var cfg Config
+	cfg := Config{}
 	_ = env.Parse(&cfg)
-	targetHost = os.Getenv("ADDRESS")
-	flag.StringVar(&targetHost, "a", cfg.targetHost, "Target base host:port")
+
+	flag.StringVar(&targetHost, "a", cfg.TargetHost, "Target base host:port")
 	flag.Parse()
 	//serverFlags.Parse(os.Args[1:])
 	var memStorage = storage.MemStorage{GaugeMetric: make(storage.GaugeMetric), CounterMetric: make(storage.CounterMetric)}

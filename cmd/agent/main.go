@@ -19,18 +19,18 @@ type statsFloat map[string]float64
 type statsInt map[string]int64
 
 type Config struct {
-	targetHost     string `env:"ADDRESS" envDefault:"http://localhost:8080"`
-	reportInterval int64  `env:"REPORT_INTERVAL" envDefault:"2"`
-	pollInterval   int64  `env:"POLL_INTERVAL" envDefault:"10"`
+	TargetHost     string `env:"ADDRESS" envDefault:"http://localhost:8080"`
+	ReportInterval int64  `env:"REPORT_INTERVAL" envDefault:"2"`
+	PollInterval   int64  `env:"POLL_INTERVAL" envDefault:"10"`
 }
 
 func main() {
 	var cfg Config
 	_ = env.Parse(&cfg)
 	//agentFlags := flag.NewFlagSet("agent", flag.ExitOnError)
-	flag.StringVar(&targetHost, "a", cfg.targetHost, "Target base host:port")
-	flag.Int64Var(&reportInterval, "r", cfg.reportInterval, "Report interval in sec")
-	flag.Int64Var(&pollInterval, "p", cfg.pollInterval, "Poll interval in sec")
+	flag.StringVar(&targetHost, "a", cfg.TargetHost, "Target base host:port")
+	flag.Int64Var(&reportInterval, "r", cfg.ReportInterval, "Report interval in sec")
+	flag.Int64Var(&pollInterval, "p", cfg.PollInterval, "Poll interval in sec")
 	flag.Parse()
 	client := resty.New()
 	sf := statsFloat{}
