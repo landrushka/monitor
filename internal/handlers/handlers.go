@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/landrushka/monitor.git/internal/storage"
 	"html/template"
@@ -94,7 +93,7 @@ func (bh *Handler) GetValueHandle(rw http.ResponseWriter, r *http.Request) {
 	if typeName == "gauge" {
 		val, ok := bh.memStorage.GaugeMetric[nameName]
 		if ok {
-			_, _ = rw.Write([]byte(fmt.Sprintf("%.3f", val)))
+			_, _ = rw.Write([]byte(strconv.FormatFloat(val, 'f', -1, 64)))
 		} else {
 			http.Error(rw, "unknown name: "+typeName, http.StatusNotFound)
 		}
