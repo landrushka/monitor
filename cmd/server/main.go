@@ -18,7 +18,7 @@ var cfg Config
 
 func main() {
 	//serverFlags := flag.NewFlagSet("server", flag.ExitOnError)
-	flag.StringVar(&cfg.TargetHost, "a", ":8080", "Target base host:port")
+	flag.StringVar(&cfg.TargetHost, "a", "localhost:8080", "Target base host:port")
 	flag.Parse()
 
 	_ = env.Parse(&cfg)
