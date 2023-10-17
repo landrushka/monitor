@@ -18,10 +18,10 @@ type statsFloat map[string]float64
 type statsInt map[string]int64
 
 func main() {
-	agentFlags := flag.NewFlagSet("agent", flag.ExitOnError)
-	agentFlags.StringVar(&targetHost, "a", targetHost, "Target base host:port")
-	agentFlags.Int64Var(&reportInterval, "r", reportInterval, "Report interval in sec")
-	agentFlags.Int64Var(&pollInterval, "p", pollInterval, "Poll interval in sec")
+	//agentFlags := flag.NewFlagSet("agent", flag.ExitOnError)
+	flag.StringVar(&targetHost, "a", targetHost, "Target base host:port")
+	flag.Int64Var(&reportInterval, "r", reportInterval, "Report interval in sec")
+	flag.Int64Var(&pollInterval, "p", pollInterval, "Poll interval in sec")
 	flag.Parse()
 	client := resty.New()
 	sf := statsFloat{}

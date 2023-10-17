@@ -12,8 +12,9 @@ import (
 var targetHost string = "localhost:8080"
 
 func main() {
-	serverFlags := flag.NewFlagSet("agent", flag.ExitOnError)
-	serverFlags.StringVar(&targetHost, "a", targetHost, "Target base host:port")
+	//serverFlags := flag.NewFlagSet("agent", flag.ExitOnError)
+	flag.StringVar(&targetHost, "a", targetHost, "Target base host:port")
+	flag.Parse()
 	var memStorage = storage.MemStorage{GaugeMetric: make(storage.GaugeMetric), CounterMetric: make(storage.CounterMetric)}
 	h := handlers.NewHandler(memStorage)
 
