@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/caarlos0/env/v6"
 	"github.com/go-resty/resty/v2"
+	"github.com/landrushka/monitor.git/internal/storage"
 	"math/rand"
 	"runtime"
 	"strconv"
@@ -12,14 +13,14 @@ import (
 	"time"
 )
 
-type statsFloat map[string]float64
-type statsInt map[string]int64
-
 type Config struct {
 	TargetHost     string `env:"ADDRESS"`
 	ReportInterval int64  `env:"REPORT_INTERVAL"`
 	PollInterval   int64  `env:"POLL_INTERVAL"`
 }
+
+type statsInt storage.StatsInt
+type statsFloat storage.StatsFloat
 
 var cfg Config
 
@@ -34,6 +35,7 @@ func main() {
 	_ = env.Parse(&cfg)
 
 	client := resty.New()
+
 	sf := statsFloat{}
 	si := statsInt{}
 	count := int64(0)

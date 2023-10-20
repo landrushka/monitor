@@ -46,7 +46,7 @@ type Handler struct {
 	memStorage storage.MemStorage
 }
 
-func (bh *Handler) UpdateHandle(rw http.ResponseWriter, r *http.Request) {
+func (h *Handler) UpdateHandle(rw http.ResponseWriter, r *http.Request) {
 	typeName := strings.ToLower(chi.URLParam(r, "type"))
 	if typeName != "gauge" && typeName != "counter" {
 		http.Error(rw, "unknown type: "+typeName, http.StatusBadRequest)
@@ -59,7 +59,7 @@ func (bh *Handler) UpdateHandle(rw http.ResponseWriter, r *http.Request) {
 			rw.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		bh.memStorage.UpdateGauge(name, val)
+		h.memStorage.UpdateGauge(name, val)
 		rw.WriteHeader(http.StatusOK)
 	}
 	if typeName == "counter" {
@@ -70,28 +70,28 @@ func (bh *Handler) UpdateHandle(rw http.ResponseWriter, r *http.Request) {
 			rw.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		bh.memStorage.UpdateCounter(name, val)
+		h.memStorage.UpdateCounter(name, val)
 		rw.WriteHeader(http.StatusOK)
 	}
 }
 
-func (bh *Handler) GetAllNamesHandle(rw http.ResponseWriter, r *http.Request) {
-	keys := make([]string, 0, len(bh.memStorage.GaugeMetric)+len(bh.memStorage.CounterMetric))
-	for k := range bh.memStorage.GaugeMetric {
+func (h *Handler) GetAllNamesHandle(rw http.ResponseWriter, r *http.Request) {
+	keys := make([]string, 0, len(h.memStorage.GaugeMetric)+len(h.memStorage.CounterMetric))
+	for k := range h.memStorage.GaugeMetric {
 		keys = append(keys, k)
 	}
-	for k := range bh.memStorage.CounterMetric {
+	for k := range h.memStorage.CounterMetric {
 		keys = append(keys, k)
 	}
 	tmpl := template.Must(template.New("").Parse(nameListHTML))
 	_ = tmpl.Execute(rw, keys)
 }
 
-func (bh *Handler) GetValueHandle(rw http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetValueHandle(rw http.ResponseWriter, r *http.Request) {
 	typeName := strings.ToLower(chi.URLParam(r, "type"))
 	nameName := chi.URLParam(r, "name")
 	if typeName == "gauge" {
-		val, ok := bh.memStorage.GaugeMetric[nameName]
+		val, ok := h.memStorage.GaugeMetric[nameName]
 		if ok {
 			_, _ = rw.Write([]byte(strconv.FormatFloat(val, 'f', -1, 64)))
 		} else {
@@ -100,7 +100,7 @@ func (bh *Handler) GetValueHandle(rw http.ResponseWriter, r *http.Request) {
 
 	}
 	if typeName == "counter" {
-		val, ok := bh.memStorage.CounterMetric[nameName]
+		val, ok := h.memStorage.CounterMetric[nameName]
 		if ok {
 			_, _ = rw.Write([]byte(strconv.FormatInt(val, 10)))
 		} else {
