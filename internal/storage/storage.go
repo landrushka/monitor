@@ -8,9 +8,6 @@ type Storage interface {
 type GaugeMetric map[string]float64
 type CounterMetric map[string]int64
 
-type StatsFloat map[string]float64
-type StatsInt map[string]int64
-
 type MemStorage struct {
 	GaugeMetric   GaugeMetric
 	CounterMetric CounterMetric
