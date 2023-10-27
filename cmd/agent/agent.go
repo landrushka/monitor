@@ -22,5 +22,8 @@ func main() {
 	flag.Parse()
 	_ = env.Parse(&cfg)
 
-	workers.StartWorker(cfg.TargetHost, cfg.ReportInterval, cfg.PollInterval)
+	err := workers.StartAgent(cfg.TargetHost, cfg.ReportInterval, cfg.PollInterval)
+	if err != nil {
+		panic(err)
+	}
 }

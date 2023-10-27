@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func StartWorker(host string, reportInterval int64, pollInterval int64) {
+func StartAgent(host string, reportInterval int64, pollInterval int64) error {
 	c := resty.New()
 	sf := metrics.StatsFloat{}
 	si := metrics.StatsInt{}
@@ -33,7 +33,7 @@ func StartWorker(host string, reportInterval int64, pollInterval int64) {
 				}).SetHeader("Content-Type", "text/plain").
 					Post(host + "/update/gauge/{name}/{value}")
 				if err != nil {
-					panic(err)
+					return err
 				}
 			}
 			for name, value := range si {
@@ -46,7 +46,7 @@ func StartWorker(host string, reportInterval int64, pollInterval int64) {
 				}).SetHeader("Content-Type", "text/plain").
 					Post(host + "/update/counter/{name}/{value}")
 				if err != nil {
-					panic(err)
+					return err
 				}
 			}
 		}
