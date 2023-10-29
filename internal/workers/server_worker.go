@@ -23,7 +23,8 @@ func StartServer(host string) error {
 			})
 		})
 		r.Route("/value", func(r chi.Router) {
-			r.Get("/{type}/{name}", h.GetValueHandle)
+			r.Post("/", h.GetValueHandle)
+			r.Get("/{type}/{name}", h.GetValueHandleByParams)
 		})
 	})
 

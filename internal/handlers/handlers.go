@@ -107,6 +107,47 @@ func (h *Handler) GetAllNamesHandle(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetValueHandle(rw http.ResponseWriter, r *http.Request) {
+	var m metrics.Metrics
+	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
+		http.Error(rw, err.Error(), http.StatusBadRequest)
+		return
+	}
+	rw.Header().Set("Content-Type", "application/json")
+	var n = m.ID
+	switch typeName := m.MType; typeName {
+	case "gauge":
+		val, ok := h.memStorage.GaugeMetric[n]
+		if ok {
+			m.Value = &val
+			if err := json.NewEncoder(rw).Encode(m); err != nil {
+				http.Error(rw, err.Error(), http.StatusBadRequest)
+				return
+			} else {
+				rw.WriteHeader(http.StatusOK)
+			}
+		} else {
+			http.Error(rw, "unknown name: "+n, http.StatusNotFound)
+		}
+	case "counter":
+		val, ok := h.memStorage.CounterMetric[n]
+		if ok {
+			m.Delta = &val
+			if err := json.NewEncoder(rw).Encode(m); err != nil {
+				http.Error(rw, err.Error(), http.StatusBadRequest)
+				return
+			} else {
+				rw.WriteHeader(http.StatusOK)
+			}
+		} else {
+			http.Error(rw, "unknown name: "+n, http.StatusNotFound)
+		}
+	default:
+		http.Error(rw, "unknown type: "+typeName, http.StatusBadRequest)
+		return
+	}
+}
+
+func (h *Handler) GetValueHandleByParams(rw http.ResponseWriter, r *http.Request) {
 	typeName := strings.ToLower(chi.URLParam(r, "type"))
 	nameName := chi.URLParam(r, "name")
 	if typeName == "gauge" {
