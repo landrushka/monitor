@@ -1,10 +1,10 @@
 package workers
 
 import (
-	"fmt"
+	"bytes"
+	"encoding/json"
 	"github.com/go-resty/resty/v2"
 	"github.com/landrushka/monitor.git/internal/metrics"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -14,6 +14,8 @@ func StartAgent(host string, reportInterval int64, pollInterval int64) error {
 	sf := metrics.StatsFloat{}
 	si := metrics.StatsInt{}
 	count := int64(0)
+	var buf bytes.Buffer
+	m := metrics.Metrics{}
 
 	for {
 		time.Sleep(time.Duration(pollInterval) * time.Second)
@@ -27,11 +29,14 @@ func StartAgent(host string, reportInterval int64, pollInterval int64) error {
 				host = "http://" + host
 			}
 			for name, value := range sf {
-				_, err := c.R().SetPathParams(map[string]string{
-					"name":  name,
-					"value": fmt.Sprintf("%.2f", value),
-				}).SetHeader("Content-Type", "text/plain").
-					Post(host + "/update/gauge/{name}/{value}")
+				m.ID = name
+				m.MType = "gauge"
+				m.Value = &value
+				json.NewEncoder(&buf).Encode(m)
+				_, err := c.R().SetHeader("Content-Type", "application/json").
+					SetBody(&buf).
+					Post(host + "/update")
+				buf.Reset()
 				if err != nil {
 					return err
 				}
@@ -40,11 +45,14 @@ func StartAgent(host string, reportInterval int64, pollInterval int64) error {
 				if !strings.Contains(host, "http://") {
 					host = "http://" + host
 				}
-				_, err := c.R().SetPathParams(map[string]string{
-					"name":  name,
-					"value": strconv.FormatInt(value, 10),
-				}).SetHeader("Content-Type", "text/plain").
-					Post(host + "/update/counter/{name}/{value}")
+				m.ID = name
+				m.MType = "counter"
+				m.Delta = &value
+				json.NewEncoder(&buf).Encode(m)
+				_, err := c.R().SetHeader("Content-Type", "application/json").
+					SetBody(&buf).
+					Post(host + "/update")
+				buf.Reset()
 				if err != nil {
 					return err
 				}

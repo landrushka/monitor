@@ -1,8 +1,11 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"github.com/go-chi/chi/v5"
+	"github.com/landrushka/monitor.git/internal/metrics"
 	"github.com/landrushka/monitor.git/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -147,14 +150,13 @@ func TestHandler_UpdateHandle(t *testing.T) {
 			h := &Handler{
 				memStorage: test.fields.memStorage,
 			}
+			var buf bytes.Buffer
+			var val float64 = 100.00
 
-			request := httptest.NewRequest(http.MethodPost, "/update/{type}/{name}/{value}", nil)
+			m := metrics.Metrics{ID: "gauge_test_name", MType: "gauge", Value: &val}
+			json.NewEncoder(&buf).Encode(m)
 
-			rctx := chi.NewRouteContext()
-			rctx.URLParams.Add("type", "gauge")
-			rctx.URLParams.Add("name", "gauge_test_name")
-			rctx.URLParams.Add("value", "100")
-			request = request.WithContext(context.WithValue(request.Context(), chi.RouteCtxKey, rctx))
+			request := httptest.NewRequest(http.MethodPost, "/update", &buf)
 
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
