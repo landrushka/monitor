@@ -39,6 +39,7 @@ func RequestLogger(h http.Handler) http.Handler {
 		responseData := &responseData{
 			status: 0,
 			size:   0,
+			body:   "",
 		}
 		lw := loggingResponseWriter{
 			ResponseWriter: w, // встраиваем оригинальный http.ResponseWriter
@@ -55,6 +56,7 @@ func RequestLogger(h http.Handler) http.Handler {
 			zap.Duration("duration", duration),
 			zap.Int("status", responseData.status),
 			zap.Int("size", responseData.size),
+			zap.String("body", responseData.body),
 		)
 	})
 }
@@ -64,6 +66,7 @@ type (
 	responseData struct {
 		status int
 		size   int
+		body   string
 	}
 
 	// добавляем реализацию http.ResponseWriter
@@ -77,6 +80,7 @@ func (r *loggingResponseWriter) Write(b []byte) (int, error) {
 	// записываем ответ, используя оригинальный http.ResponseWriter
 	size, err := r.ResponseWriter.Write(b)
 	r.responseData.size += size // захватываем размер
+	r.responseData.body = string(b)
 	return size, err
 }
 
