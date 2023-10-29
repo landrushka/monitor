@@ -151,7 +151,7 @@ func TestHandler_UpdateHandle(t *testing.T) {
 				memStorage: test.fields.memStorage,
 			}
 			var buf bytes.Buffer
-			var val float64 = 100.00
+			var val = 100.00
 
 			m := metrics.Metrics{ID: "gauge_test_name", MType: "gauge", Value: &val}
 			json.NewEncoder(&buf).Encode(m)
