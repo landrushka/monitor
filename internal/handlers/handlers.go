@@ -35,18 +35,32 @@ func (h *Handler) UpdateHandle(rw http.ResponseWriter, r *http.Request) {
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 		return
 	}
-
+	rw.Header().Set("Content-Type", "application/json")
 	switch typeName := m.MType; typeName {
 	case "gauge":
+		if m.Value == nil {
+			http.Error(rw, "", http.StatusBadRequest)
+			return
+		}
 		h.memStorage.UpdateGauge(m.ID, *m.Value)
-		json.NewEncoder(rw).Encode(m)
-		rw.Header().Set("Content-Type", "application/json")
-		rw.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(rw).Encode(m); err != nil {
+			http.Error(rw, err.Error(), http.StatusBadRequest)
+			return
+		} else {
+			rw.WriteHeader(http.StatusOK)
+		}
 	case "counter":
+		if m.Delta == nil {
+			http.Error(rw, "", http.StatusBadRequest)
+			return
+		}
 		h.memStorage.UpdateCounter(m.ID, *m.Delta)
-		json.NewEncoder(rw).Encode(m)
-		rw.Header().Set("Content-Type", "application/json")
-		rw.WriteHeader(http.StatusOK)
+		if err := json.NewEncoder(rw).Encode(m); err != nil {
+			http.Error(rw, err.Error(), http.StatusBadRequest)
+			return
+		} else {
+			rw.WriteHeader(http.StatusOK)
+		}
 	default:
 		http.Error(rw, "unknown type: "+typeName, http.StatusBadRequest)
 		return
