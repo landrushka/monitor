@@ -16,7 +16,12 @@ func StartServer(host string) error {
 	r.Use(logger.RequestLogger)
 	r.Route("/", func(r chi.Router) {
 		r.Get("/", h.GetAllNamesHandle)
-		r.Post("/update", h.UpdateHandle)
+		r.Route("/update", func(r chi.Router) {
+			r.Post("/", h.UpdateHandle)
+			r.Route("/{type}", func(r chi.Router) {
+				r.Post("/{name}/{value}", h.UpdateHandleByParams)
+			})
+		})
 		r.Route("/value", func(r chi.Router) {
 			r.Get("/{type}/{name}", h.GetValueHandle)
 		})

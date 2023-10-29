@@ -29,6 +29,33 @@ type Handler struct {
 	memStorage storage.MemStorage
 }
 
+func (h *Handler) UpdateHandleByParams(rw http.ResponseWriter, r *http.Request) {
+	switch typeName := strings.ToLower(chi.URLParam(r, "type")); typeName {
+	case "gauge":
+		name := chi.URLParam(r, "name")
+		value := strings.ToLower(chi.URLParam(r, "value"))
+		val, err := strconv.ParseFloat(strings.TrimSpace(value), 64)
+		if err != nil {
+			rw.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		h.memStorage.UpdateGauge(name, val)
+		rw.WriteHeader(http.StatusOK)
+	case "counter":
+		name := chi.URLParam(r, "name")
+		value := strings.ToLower(chi.URLParam(r, "value"))
+		val, err := strconv.ParseInt(strings.TrimSpace(value), 10, 64)
+		if err != nil {
+			rw.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		h.memStorage.UpdateCounter(name, val)
+		rw.WriteHeader(http.StatusOK)
+	default:
+		http.Error(rw, "unknown type: "+typeName, http.StatusBadRequest)
+	}
+}
+
 func (h *Handler) UpdateHandle(rw http.ResponseWriter, r *http.Request) {
 	var m metrics.Metrics
 	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
