@@ -55,7 +55,7 @@ func TestHandler_GetValueHandle(t *testing.T) {
 
 			// создаём новый Recorder
 			w := httptest.NewRecorder()
-			h.GetValueHandle(w, request)
+			h.GetValueHandleByParams(w, request)
 
 			res := w.Result()
 			// проверяем код ответа
