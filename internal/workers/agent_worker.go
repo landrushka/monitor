@@ -3,8 +3,10 @@ package workers
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/avast/retry-go"
 	"github.com/go-resty/resty/v2"
 	"github.com/landrushka/monitor.git/internal/metrics"
+	"log"
 	"strings"
 	"time"
 )
@@ -33,9 +35,19 @@ func StartAgent(host string, reportInterval int64, pollInterval int64) error {
 				m.MType = "gauge"
 				m.Value = &value
 				json.NewEncoder(&buf).Encode(m)
-				_, err := c.R().SetHeader("Content-Type", "application/json").
-					SetBody(&buf).
-					Post(host + "/update")
+				err := retry.Do(
+					func() error {
+						var err error
+						_, err = c.R().SetHeader("Content-Type", "application/json").
+							SetBody(&buf).
+							Post(host + "/update")
+						return err
+					},
+					retry.Attempts(10),
+					retry.OnRetry(func(n uint, err error) {
+						log.Printf("Retrying request after error: %v", err)
+					}),
+				)
 				buf.Reset()
 				if err != nil {
 					return err
@@ -49,9 +61,19 @@ func StartAgent(host string, reportInterval int64, pollInterval int64) error {
 				m.MType = "counter"
 				m.Delta = &value
 				json.NewEncoder(&buf).Encode(m)
-				_, err := c.R().SetHeader("Content-Type", "application/json").
-					SetBody(&buf).
-					Post(host + "/update")
+				err := retry.Do(
+					func() error {
+						var err error
+						_, err = c.R().SetHeader("Content-Type", "application/json").
+							SetBody(&buf).
+							Post(host + "/update")
+						return err
+					},
+					retry.Attempts(3),
+					retry.OnRetry(func(n uint, err error) {
+						log.Printf("Retrying request after error: %v", err)
+					}),
+				)
 				buf.Reset()
 				if err != nil {
 					return err
