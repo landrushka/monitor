@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"encoding/json"
 	"github.com/go-chi/chi/v5"
+	"github.com/landrushka/monitor.git/internal/metrics"
 	"github.com/landrushka/monitor.git/internal/storage"
 	"html/template"
 	"net/http"
@@ -16,25 +18,6 @@ const nameListHTML = `
 </dl>
 `
 
-// middleware принимает параметром Handler и возвращает тоже Handler.
-func Middleware(next http.Handler) http.Handler {
-	// получаем Handler приведением типа http.HandlerFunc
-	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		// здесь пишем логику обработки
-		// например, разрешаем запросы cross-domain
-		// w.Header().Set("Access-Control-Allow-Origin", "*")
-		// ...
-		// замыкание: используем ServeHTTP следующего хендлера
-		if req.Method != http.MethodPost {
-			http.Error(res, "Only POST requests", http.StatusMethodNotAllowed)
-			return
-		} else {
-			next.ServeHTTP(res, req)
-		}
-
-	})
-}
-
 func NewHandler(memStorage storage.MemStorage) *Handler {
 	h := &Handler{
 		memStorage: memStorage,
@@ -46,12 +29,9 @@ type Handler struct {
 	memStorage storage.MemStorage
 }
 
-func (h *Handler) UpdateHandle(rw http.ResponseWriter, r *http.Request) {
-	typeName := strings.ToLower(chi.URLParam(r, "type"))
-	if typeName != "gauge" && typeName != "counter" {
-		http.Error(rw, "unknown type: "+typeName, http.StatusBadRequest)
-	}
-	if typeName == "gauge" {
+func (h *Handler) UpdateHandleByParams(rw http.ResponseWriter, r *http.Request) {
+	switch typeName := strings.ToLower(chi.URLParam(r, "type")); typeName {
+	case "gauge":
 		name := chi.URLParam(r, "name")
 		value := strings.ToLower(chi.URLParam(r, "value"))
 		val, err := strconv.ParseFloat(strings.TrimSpace(value), 64)
@@ -61,8 +41,7 @@ func (h *Handler) UpdateHandle(rw http.ResponseWriter, r *http.Request) {
 		}
 		h.memStorage.UpdateGauge(name, val)
 		rw.WriteHeader(http.StatusOK)
-	}
-	if typeName == "counter" {
+	case "counter":
 		name := chi.URLParam(r, "name")
 		value := strings.ToLower(chi.URLParam(r, "value"))
 		val, err := strconv.ParseInt(strings.TrimSpace(value), 10, 64)
@@ -72,6 +51,46 @@ func (h *Handler) UpdateHandle(rw http.ResponseWriter, r *http.Request) {
 		}
 		h.memStorage.UpdateCounter(name, val)
 		rw.WriteHeader(http.StatusOK)
+	default:
+		http.Error(rw, "unknown type: "+typeName, http.StatusBadRequest)
+	}
+}
+
+func (h *Handler) UpdateHandle(rw http.ResponseWriter, r *http.Request) {
+	var m metrics.Metrics
+	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
+		http.Error(rw, err.Error(), http.StatusBadRequest)
+		return
+	}
+	rw.Header().Set("Content-Type", "application/json")
+	switch typeName := m.MType; typeName {
+	case "gauge":
+		if m.Value == nil {
+			http.Error(rw, "", http.StatusBadRequest)
+			return
+		}
+		h.memStorage.UpdateGauge(m.ID, *m.Value)
+		if err := json.NewEncoder(rw).Encode(m); err != nil {
+			http.Error(rw, err.Error(), http.StatusBadRequest)
+			return
+		} else {
+			rw.WriteHeader(http.StatusOK)
+		}
+	case "counter":
+		if m.Delta == nil {
+			http.Error(rw, "", http.StatusBadRequest)
+			return
+		}
+		h.memStorage.UpdateCounter(m.ID, *m.Delta)
+		if err := json.NewEncoder(rw).Encode(m); err != nil {
+			http.Error(rw, err.Error(), http.StatusBadRequest)
+			return
+		} else {
+			rw.WriteHeader(http.StatusOK)
+		}
+	default:
+		http.Error(rw, "unknown type: "+typeName, http.StatusBadRequest)
+		return
 	}
 }
 
@@ -88,6 +107,47 @@ func (h *Handler) GetAllNamesHandle(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetValueHandle(rw http.ResponseWriter, r *http.Request) {
+	var m metrics.Metrics
+	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
+		http.Error(rw, err.Error(), http.StatusBadRequest)
+		return
+	}
+	rw.Header().Set("Content-Type", "application/json")
+	var n = m.ID
+	switch typeName := m.MType; typeName {
+	case "gauge":
+		val, ok := h.memStorage.GaugeMetric[n]
+		if ok {
+			m.Value = &val
+			if err := json.NewEncoder(rw).Encode(m); err != nil {
+				http.Error(rw, err.Error(), http.StatusBadRequest)
+				return
+			} else {
+				rw.WriteHeader(http.StatusOK)
+			}
+		} else {
+			http.Error(rw, "unknown name: "+n, http.StatusNotFound)
+		}
+	case "counter":
+		val, ok := h.memStorage.CounterMetric[n]
+		if ok {
+			m.Delta = &val
+			if err := json.NewEncoder(rw).Encode(m); err != nil {
+				http.Error(rw, err.Error(), http.StatusBadRequest)
+				return
+			} else {
+				rw.WriteHeader(http.StatusOK)
+			}
+		} else {
+			http.Error(rw, "unknown name: "+n, http.StatusNotFound)
+		}
+	default:
+		http.Error(rw, "unknown type: "+typeName, http.StatusBadRequest)
+		return
+	}
+}
+
+func (h *Handler) GetValueHandleByParams(rw http.ResponseWriter, r *http.Request) {
 	typeName := strings.ToLower(chi.URLParam(r, "type"))
 	nameName := chi.URLParam(r, "name")
 	if typeName == "gauge" {
