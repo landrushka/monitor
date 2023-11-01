@@ -13,7 +13,7 @@ func StartServer(host string) error {
 	var memStorage = storage.MemStorage{GaugeMetric: make(storage.GaugeMetric), CounterMetric: make(storage.CounterMetric)}
 	h := handlers.NewHandler(memStorage)
 	r := chi.NewRouter()
-	r.Use(logger.RequestLogger)
+	r.Use(handlers.GzipMiddleware, logger.RequestLogger)
 	r.Route("/", func(r chi.Router) {
 		r.Get("/", h.GetAllNamesHandle)
 		r.Route("/update", func(r chi.Router) {

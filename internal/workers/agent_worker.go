@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/avast/retry-go"
 	"github.com/go-resty/resty/v2"
+	"github.com/landrushka/monitor.git/internal/archiver"
 	"github.com/landrushka/monitor.git/internal/metrics"
 	"log"
 	"strings"
@@ -35,11 +36,13 @@ func StartAgent(host string, reportInterval int64, pollInterval int64) error {
 				m.MType = "gauge"
 				m.Value = &value
 				json.NewEncoder(&buf).Encode(m)
+				b, _ := archiver.Compress(buf.Bytes())
 				err := retry.Do(
 					func() error {
 						var err error
 						_, err = c.R().SetHeader("Content-Type", "application/json").
-							SetBody(&buf).
+							SetHeader("Content-Encoding", "gzip").
+							SetBody(b).
 							Post(host + "/update")
 						return err
 					},
@@ -61,11 +64,13 @@ func StartAgent(host string, reportInterval int64, pollInterval int64) error {
 				m.MType = "counter"
 				m.Delta = &value
 				json.NewEncoder(&buf).Encode(m)
+				b, _ := archiver.Compress(buf.Bytes())
 				err := retry.Do(
 					func() error {
 						var err error
 						_, err = c.R().SetHeader("Content-Type", "application/json").
-							SetBody(&buf).
+							SetHeader("Content-Encoding", "gzip").
+							SetBody(b).
 							Post(host + "/update")
 						return err
 					},
