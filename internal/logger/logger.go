@@ -40,6 +40,7 @@ func RequestLogger(h http.Handler) http.Handler {
 			status: 0,
 			size:   0,
 			body:   "",
+			header: http.Header{},
 		}
 		lw := loggingResponseWriter{
 			ResponseWriter: w, // встраиваем оригинальный http.ResponseWriter
@@ -53,10 +54,12 @@ func RequestLogger(h http.Handler) http.Handler {
 		Log.Info("Request",
 			zap.String("URI", r.RequestURI),
 			zap.String("method", r.Method),
+			zap.String("request_Accept-Encoding", r.Header.Get("Accept-Encoding")),
 			zap.Duration("duration", duration),
 			zap.Int("status", responseData.status),
 			zap.Int("size", responseData.size),
 			zap.String("body", responseData.body),
+			zap.String("response_Content-Encoding", responseData.header.Get("Content-Encoding")),
 		)
 	})
 }
@@ -67,6 +70,7 @@ type (
 		status int
 		size   int
 		body   string
+		header http.Header
 	}
 
 	// добавляем реализацию http.ResponseWriter
@@ -88,4 +92,11 @@ func (r *loggingResponseWriter) WriteHeader(statusCode int) {
 	// записываем код статуса, используя оригинальный http.ResponseWriter
 	r.ResponseWriter.WriteHeader(statusCode)
 	r.responseData.status = statusCode // захватываем код статуса
+}
+
+func (r *loggingResponseWriter) Header() http.Header {
+	// записываем код статуса, используя оригинальный http.ResponseWriter
+
+	r.responseData.header = r.ResponseWriter.Header() // захватываем код статуса
+	return r.ResponseWriter.Header()
 }
