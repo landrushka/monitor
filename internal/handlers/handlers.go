@@ -3,9 +3,11 @@ package handlers
 import (
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
+	"github.com/landrushka/monitor.git/internal/logger"
 	"github.com/landrushka/monitor.git/internal/metrics"
 	"github.com/landrushka/monitor.git/internal/storage"
 	"github.com/landrushka/monitor.git/internal/utils"
+	"go.uber.org/zap"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -148,6 +150,12 @@ func (h *Handler) GetAllNamesHandle(rw http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) GetValueHandle(rw http.ResponseWriter, r *http.Request) {
 	var m metrics.Metrics
+	logger.Log.Info("Request",
+		zap.String("URI", r.RequestURI),
+		zap.String("method", r.Method),
+		zap.String("request_Accept-Encoding", r.Header.Get("Accept-Encoding")),
+		zap.String("request_Content-Encoding", r.Header.Get("Content-Encoding")),
+	)
 	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 		return
