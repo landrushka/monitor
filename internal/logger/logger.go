@@ -56,11 +56,13 @@ func RequestLogger(h http.Handler) http.Handler {
 			zap.String("method", r.Method),
 			zap.String("request_Accept-Encoding", r.Header.Get("Accept-Encoding")),
 			zap.String("request_Content-Encoding", r.Header.Get("Content-Encoding")),
+			zap.String("request_Content-Type", r.Header.Get("Content-Type")),
 			zap.Duration("duration", duration),
 			zap.Int("status", responseData.status),
 			zap.Int("size", responseData.size),
 			zap.String("body", responseData.body),
 			zap.String("response_Content-Encoding", responseData.header.Get("Content-Encoding")),
+			zap.String("response_Content-Type", responseData.header.Get("Content-Type")),
 		)
 	})
 }
