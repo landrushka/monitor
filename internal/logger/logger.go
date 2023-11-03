@@ -55,6 +55,7 @@ func RequestLogger(h http.Handler) http.Handler {
 			zap.String("URI", r.RequestURI),
 			zap.String("method", r.Method),
 			zap.String("request_Accept-Encoding", r.Header.Get("Accept-Encoding")),
+			zap.String("request_Content-Encoding", r.Header.Get("Content-Encoding")),
 			zap.Duration("duration", duration),
 			zap.Int("status", responseData.status),
 			zap.Int("size", responseData.size),
