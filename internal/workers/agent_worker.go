@@ -14,7 +14,6 @@ import (
 
 func StartAgent(host string, reportInterval int64, pollInterval int64) error {
 	c := resty.New()
-	c.SetHeader("Accept-Encoding", "")
 	sf := metrics.StatsFloat{}
 	si := metrics.StatsInt{}
 	count := int64(0)
