@@ -1,19 +1,24 @@
 package workers
 
 import (
-	"fmt"
+	"bytes"
+	"encoding/json"
+	"github.com/avast/retry-go"
 	"github.com/go-resty/resty/v2"
+	"github.com/landrushka/monitor.git/internal/archiver"
 	"github.com/landrushka/monitor.git/internal/metrics"
-	"strconv"
+	"log"
 	"strings"
 	"time"
 )
 
-func StartWorker(host string, reportInterval int64, pollInterval int64) {
+func StartAgent(host string, reportInterval int64, pollInterval int64) error {
 	c := resty.New()
 	sf := metrics.StatsFloat{}
 	si := metrics.StatsInt{}
 	count := int64(0)
+	var buf bytes.Buffer
+	m := metrics.Metrics{}
 
 	for {
 		time.Sleep(time.Duration(pollInterval) * time.Second)
@@ -27,26 +32,56 @@ func StartWorker(host string, reportInterval int64, pollInterval int64) {
 				host = "http://" + host
 			}
 			for name, value := range sf {
-				_, err := c.R().SetPathParams(map[string]string{
-					"name":  name,
-					"value": fmt.Sprintf("%.2f", value),
-				}).SetHeader("Content-Type", "text/plain").
-					Post(host + "/update/gauge/{name}/{value}")
+				m.ID = name
+				m.MType = "gauge"
+				m.Value = &value
+				json.NewEncoder(&buf).Encode(m)
+				b, _ := archiver.Compress(buf.Bytes())
+				err := retry.Do(
+					func() error {
+						var err error
+						_, err = c.R().SetHeader("Content-Type", "application/json").
+							SetHeader("Content-Encoding", "gzip").
+							SetBody(b).
+							Post(host + "/update")
+						return err
+					},
+					retry.Attempts(10),
+					retry.OnRetry(func(n uint, err error) {
+						log.Printf("Retrying request after error: %v", err)
+					}),
+				)
+				buf.Reset()
 				if err != nil {
-					panic(err)
+					return err
 				}
 			}
 			for name, value := range si {
 				if !strings.Contains(host, "http://") {
 					host = "http://" + host
 				}
-				_, err := c.R().SetPathParams(map[string]string{
-					"name":  name,
-					"value": strconv.FormatInt(value, 10),
-				}).SetHeader("Content-Type", "text/plain").
-					Post(host + "/update/counter/{name}/{value}")
+				m.ID = name
+				m.MType = "counter"
+				m.Delta = &value
+				json.NewEncoder(&buf).Encode(m)
+				b, _ := archiver.Compress(buf.Bytes())
+				err := retry.Do(
+					func() error {
+						var err error
+						_, err = c.R().SetHeader("Content-Type", "application/json").
+							SetHeader("Content-Encoding", "gzip").
+							SetBody(b).
+							Post(host + "/update")
+						return err
+					},
+					retry.Attempts(3),
+					retry.OnRetry(func(n uint, err error) {
+						log.Printf("Retrying request after error: %v", err)
+					}),
+				)
+				buf.Reset()
 				if err != nil {
-					panic(err)
+					return err
 				}
 			}
 		}
