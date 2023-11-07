@@ -10,7 +10,6 @@ import (
 // сжимать передаваемые данные и выставлять правильные HTTP-заголовки
 type compressWriter struct {
 	w  http.ResponseWriter
-	f  http.Flusher
 	zw *gzip.Writer
 }
 
@@ -26,7 +25,6 @@ func (c *compressWriter) Header() http.Header {
 }
 
 func (c *compressWriter) Write(p []byte) (int, error) {
-
 	return c.zw.Write(p)
 }
 
@@ -34,7 +32,7 @@ func (c *compressWriter) WriteHeader(statusCode int) {
 	if statusCode < 300 {
 		c.w.Header().Set("Content-Encoding", "gzip")
 	}
-	//c.w.WriteHeader(statusCode)
+	c.w.WriteHeader(statusCode)
 }
 
 // Close закрывает gzip.Writer и досылает все данные из буфера.

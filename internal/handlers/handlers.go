@@ -21,29 +21,34 @@ const nameListHTML = `
 </dl>
 `
 
+var DefaultCompressibleContentTypes = []string{
+	"text/html",
+	"application/json",
+}
+
 func GzipMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// по умолчанию устанавливаем оригинальный http.ResponseWriter как тот,
 		// который будем передавать следующей функции
 		ow := w
 
-		// проверяем, что клиент умеет получать от сервера сжатые данные в формате gzip
-		acceptEncoding := r.Header.Get("Accept-Encoding")
-		supportsGzip := strings.Contains(acceptEncoding, "gzip")
-		contentType := r.Header.Get("Content-Type")
-		supportsContentType := false
-		if strings.Contains(contentType, "application/json") || strings.Contains(contentType, "text/html") {
-			supportsContentType = true
-		}
-		if supportsGzip && supportsContentType {
-
-			// оборачиваем оригинальный http.ResponseWriter новым с поддержкой сжатия
-			cw := utils.NewCompressWriter(w)
-			// меняем оригинальный http.ResponseWriter на новый
-			ow = cw
-			// не забываем отправить клиенту все сжатые данные после завершения middleware
-			defer cw.Close()
-		}
+		//// проверяем, что клиент умеет получать от сервера сжатые данные в формате gzip
+		//acceptEncoding := r.Header.Get("Accept-Encoding")
+		//supportsGzip := strings.Contains(acceptEncoding, "gzip")
+		//contentType := r.Header.Get("Content-Type")
+		//supportsContentType := false
+		//if strings.Contains(contentType, "application/json") || strings.Contains(contentType, "text/html") {
+		//	supportsContentType = true
+		//}
+		//if supportsGzip && supportsContentType {
+		//
+		//	// оборачиваем оригинальный http.ResponseWriter новым с поддержкой сжатия
+		//	cw := utils.NewCompressWriter(w)
+		//	// меняем оригинальный http.ResponseWriter на новый
+		//	ow = cw
+		//	// не забываем отправить клиенту все сжатые данные после завершения middleware
+		//	defer cw.Close()
+		//}
 
 		// проверяем, что клиент отправил серверу сжатые данные в формате gzip
 		contentEncoding := r.Header.Get("Content-Encoding")
@@ -51,7 +56,7 @@ func GzipMiddleware(h http.Handler) http.Handler {
 		if sendsGzip {
 			// оборачиваем тело запроса в io.Reader с поддержкой декомпрессии
 			cr, err := utils.NewCompressReader(r.Body)
-			w.Header().Set("Content-Encoding", "gzip")
+			//w.Header().Set("Content-Encoding", "gzip")
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				return
@@ -88,7 +93,7 @@ func (h *Handler) UpdateHandleByParams(rw http.ResponseWriter, r *http.Request) 
 			return
 		}
 		h.memStorage.UpdateGauge(name, val)
-		rw.WriteHeader(http.StatusOK)
+		//rw.WriteHeader(http.StatusOK)
 	case "counter":
 		name := chi.URLParam(r, "name")
 		value := strings.ToLower(chi.URLParam(r, "value"))
@@ -98,7 +103,7 @@ func (h *Handler) UpdateHandleByParams(rw http.ResponseWriter, r *http.Request) 
 			return
 		}
 		h.memStorage.UpdateCounter(name, val)
-		rw.WriteHeader(http.StatusOK)
+		//rw.WriteHeader(http.StatusOK)
 	default:
 		http.Error(rw, "unknown type: "+typeName, http.StatusBadRequest)
 	}
@@ -122,7 +127,10 @@ func (h *Handler) UpdateHandle(rw http.ResponseWriter, r *http.Request) {
 			http.Error(rw, err.Error(), http.StatusBadRequest)
 			return
 		} else {
-			rw.WriteHeader(http.StatusOK)
+			if f, ok := rw.(http.Flusher); ok {
+				f.Flush()
+			}
+			//rw.WriteHeader(http.StatusOK)
 		}
 	case "counter":
 		if m.Delta == nil {
@@ -134,7 +142,7 @@ func (h *Handler) UpdateHandle(rw http.ResponseWriter, r *http.Request) {
 			http.Error(rw, err.Error(), http.StatusBadRequest)
 			return
 		} else {
-			rw.WriteHeader(http.StatusOK)
+			//rw.WriteHeader(http.StatusOK)
 		}
 	default:
 		http.Error(rw, "unknown type: "+typeName, http.StatusBadRequest)

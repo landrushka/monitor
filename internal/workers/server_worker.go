@@ -2,6 +2,7 @@ package workers
 
 import (
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/landrushka/monitor.git/internal/handlers"
 	"github.com/landrushka/monitor.git/internal/logger"
 	"github.com/landrushka/monitor.git/internal/storage"
@@ -13,7 +14,9 @@ func StartServer(host string) error {
 	var memStorage = storage.MemStorage{GaugeMetric: make(storage.GaugeMetric), CounterMetric: make(storage.CounterMetric)}
 	h := handlers.NewHandler(memStorage)
 	r := chi.NewRouter()
-	r.Use(handlers.GzipMiddleware, logger.RequestLogger)
+	compressor := middleware.Compress(5, "text/html", "application/json")
+	//a_c := middleware.AllowContentEncoding("gzip")
+	r.Use(handlers.GzipMiddleware, compressor, logger.RequestLogger)
 	r.Route("/", func(r chi.Router) {
 		r.Get("/", h.GetAllNamesHandle)
 		r.Route("/update", func(r chi.Router) {
