@@ -15,7 +15,6 @@ func StartServer(host string) error {
 	h := handlers.NewHandler(memStorage)
 	r := chi.NewRouter()
 	compressor := middleware.Compress(5, "text/html", "application/json")
-	//a_c := middleware.AllowContentEncoding("gzip")
 	r.Use(handlers.GzipMiddleware, compressor, logger.RequestLogger)
 	r.Route("/", func(r chi.Router) {
 		r.Get("/", h.GetAllNamesHandle)
