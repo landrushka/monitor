@@ -158,6 +158,7 @@ func (h *Handler) GetAllNamesHandle(rw http.ResponseWriter, r *http.Request) {
 	for k := range h.memStorage.CounterMetric {
 		keys = append(keys, k)
 	}
+	rw.Header().Set("Content-Type", "text/html")
 	tmpl := template.Must(template.New("").Parse(nameListHTML))
 	_ = tmpl.Execute(rw, keys)
 }
