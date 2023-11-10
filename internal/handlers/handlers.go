@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
 	"github.com/landrushka/monitor.git/internal/logger"
-	"github.com/landrushka/monitor.git/internal/metrics"
 	"github.com/landrushka/monitor.git/internal/storage"
 	"github.com/landrushka/monitor.git/internal/utils"
 	"go.uber.org/zap"
@@ -65,15 +64,17 @@ func GzipMiddleware(h http.Handler) http.Handler {
 	})
 }
 
-func NewHandler(memStorage storage.MemStorage) *Handler {
+func NewHandler(memStorage storage.MemStorage, saveNow bool) *Handler {
 	h := &Handler{
 		memStorage: memStorage,
+		saveNow:    saveNow,
 	}
 	return h
 }
 
 type Handler struct {
 	memStorage storage.MemStorage
+	saveNow    bool
 }
 
 func (h *Handler) UpdateHandleByParams(rw http.ResponseWriter, r *http.Request) {
@@ -87,6 +88,9 @@ func (h *Handler) UpdateHandleByParams(rw http.ResponseWriter, r *http.Request) 
 			return
 		}
 		h.memStorage.UpdateGauge(name, val)
+		if h.saveNow {
+			h.memStorage.SaveData()
+		}
 	case "counter":
 		name := chi.URLParam(r, "name")
 		value := strings.ToLower(chi.URLParam(r, "value"))
@@ -96,13 +100,16 @@ func (h *Handler) UpdateHandleByParams(rw http.ResponseWriter, r *http.Request) 
 			return
 		}
 		h.memStorage.UpdateCounter(name, val)
+		if h.saveNow {
+			h.memStorage.SaveData()
+		}
 	default:
 		http.Error(rw, "unknown type: "+typeName, http.StatusBadRequest)
 	}
 }
 
 func (h *Handler) UpdateHandle(rw http.ResponseWriter, r *http.Request) {
-	var m metrics.Metrics
+	var m storage.Metrics
 	if err := json.NewDecoder(r.Body).Decode(&m); err != nil {
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 		return
@@ -123,6 +130,9 @@ func (h *Handler) UpdateHandle(rw http.ResponseWriter, r *http.Request) {
 				f.Flush()
 			}
 		}
+		if h.saveNow {
+			h.memStorage.SaveData()
+		}
 	case "counter":
 		if m.Delta == nil {
 			http.Error(rw, "", http.StatusBadRequest)
@@ -132,6 +142,9 @@ func (h *Handler) UpdateHandle(rw http.ResponseWriter, r *http.Request) {
 		if err := json.NewEncoder(rw).Encode(m); err != nil {
 			http.Error(rw, err.Error(), http.StatusBadRequest)
 			return
+		}
+		if h.saveNow {
+			h.memStorage.SaveData()
 		}
 	default:
 		http.Error(rw, "unknown type: "+typeName, http.StatusBadRequest)
@@ -153,7 +166,7 @@ func (h *Handler) GetAllNamesHandle(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetValueHandle(rw http.ResponseWriter, r *http.Request) {
-	var m metrics.Metrics
+	var m storage.Metrics
 	logger.Log.Info("Request",
 		zap.String("URI", r.RequestURI),
 		zap.String("method", r.Method),

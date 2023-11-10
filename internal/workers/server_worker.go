@@ -10,9 +10,10 @@ import (
 	"net/http"
 )
 
-func StartServer(host string) error {
-	var memStorage = storage.MemStorage{GaugeMetric: make(storage.GaugeMetric), CounterMetric: make(storage.CounterMetric)}
-	h := handlers.NewHandler(memStorage)
+var memStorage, _ = storage.NewMemStorage()
+
+func StartServer(host string, saveNow bool) error {
+	h := handlers.NewHandler(*memStorage, saveNow)
 	r := chi.NewRouter()
 	compressor := middleware.Compress(5, "text/html", "application/json")
 	r.Use(handlers.GzipMiddleware, compressor, logger.RequestLogger)
@@ -37,4 +38,18 @@ func StartServer(host string) error {
 	logger.Log.Info("Running server", zap.String("address", host))
 
 	return http.ListenAndServe(host, r)
+}
+
+func InitFileManager(resore bool, file_storage_path string) {
+	if resore {
+		var c, _ = storage.NewConsumer(file_storage_path)
+		memStorage.Consumer = c
+		memStorage.RestoreData()
+	}
+	var p, _ = storage.NewProducer(file_storage_path)
+	memStorage.Producer = p
+}
+
+func StartFileManager() {
+	memStorage.SaveData()
 }

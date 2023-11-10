@@ -6,7 +6,7 @@ import (
 	"github.com/avast/retry-go"
 	"github.com/go-resty/resty/v2"
 	"github.com/landrushka/monitor.git/internal/archiver"
-	"github.com/landrushka/monitor.git/internal/metrics"
+	"github.com/landrushka/monitor.git/internal/storage"
 	"log"
 	"strings"
 	"time"
@@ -14,11 +14,11 @@ import (
 
 func StartAgent(host string, reportInterval int64, pollInterval int64) error {
 	c := resty.New()
-	sf := metrics.StatsFloat{}
-	si := metrics.StatsInt{}
+	sf := storage.GaugeMetric{}
+	si := storage.CounterMetric{}
 	count := int64(0)
 	var buf bytes.Buffer
-	m := metrics.Metrics{}
+	m := storage.Metrics{}
 
 	for {
 		time.Sleep(time.Duration(pollInterval) * time.Second)
