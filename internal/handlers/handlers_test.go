@@ -5,8 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
-	"github.com/landrushka/monitor.git/internal/metrics"
+	"github.com/landrushka/monitor.git/internal/archiver"
 	"github.com/landrushka/monitor.git/internal/storage"
+	"github.com/landrushka/monitor.git/internal/workers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -153,7 +154,7 @@ func TestHandler_UpdateHandle(t *testing.T) {
 			var buf bytes.Buffer
 			var val = 100.00
 
-			m := metrics.Metrics{ID: "gauge_test_name", MType: "gauge", Value: &val}
+			m := storage.Metrics{ID: "gauge_test_name", MType: "gauge", Value: &val}
 			json.NewEncoder(&buf).Encode(m)
 
 			request := httptest.NewRequest(http.MethodPost, "/update", &buf)
@@ -168,6 +169,66 @@ func TestHandler_UpdateHandle(t *testing.T) {
 			// получаем и проверяем тело запроса
 			defer res.Body.Close()
 			_, err := io.ReadAll(res.Body)
+
+			require.NoError(t, err)
+			assert.Equal(t, test.want.value, h.memStorage.GaugeMetric["gauge_test_name"])
+		})
+	}
+}
+
+func TestGzipMiddleware(t *testing.T) {
+	type fields struct {
+		memStorage storage.MemStorage
+	}
+	type want struct {
+		code        int
+		value       float64
+		contentType string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   want
+	}{
+		{
+			name: "positive test #1",
+			fields: fields{
+				memStorage: storage.MemStorage{GaugeMetric: map[string]float64{"gauge_test_name": 0.001}},
+			},
+			want: want{
+				code:  200,
+				value: 100,
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			h := &Handler{
+				memStorage: test.fields.memStorage,
+			}
+			var buf bytes.Buffer
+			var val = 100.00
+
+			m := storage.Metrics{ID: "gauge_test_name", MType: "gauge", Value: &val}
+			json.NewEncoder(&buf).Encode(m)
+			b, _ := archiver.Compress(buf.Bytes())
+			z := bytes.NewBuffer(b)
+			request := httptest.NewRequest(http.MethodPost, "/update", z)
+			request.Header.Set("Content-Type", "application/json")
+			request.Header.Set("Content-Encoding", "gzip")
+
+			err := workers.StartServer("localhost:8080", true)
+
+			// создаём новый Recorder
+			w := httptest.NewRecorder()
+			h.UpdateHandle(w, request)
+
+			res := w.Result()
+			// проверяем код ответа
+			assert.Equal(t, test.want.code, res.StatusCode)
+			// получаем и проверяем тело запроса
+			defer res.Body.Close()
+			_, err = io.ReadAll(res.Body)
 
 			require.NoError(t, err)
 			assert.Equal(t, test.want.value, h.memStorage.GaugeMetric["gauge_test_name"])
