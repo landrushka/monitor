@@ -3,7 +3,9 @@ package main
 import (
 	"flag"
 	"github.com/caarlos0/env/v6"
+	"github.com/landrushka/monitor.git/internal/logger"
 	"github.com/landrushka/monitor.git/internal/workers"
+	"go.uber.org/zap"
 )
 
 type Config struct {
@@ -22,5 +24,10 @@ func main() {
 	flag.Parse()
 	_ = env.Parse(&cfg)
 
-	workers.StartWorker(cfg.TargetHost, cfg.ReportInterval, cfg.PollInterval)
+	logger.Log.Info("Running agent", zap.String("address", cfg.TargetHost))
+
+	err := workers.StartAgent(cfg.TargetHost, cfg.ReportInterval, cfg.PollInterval)
+	if err != nil {
+		panic(err)
+	}
 }
