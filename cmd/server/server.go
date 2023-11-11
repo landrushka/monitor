@@ -39,6 +39,7 @@ func main() {
 		defer wg.Done()
 		err := workers.StartServer(cfg.TargetHost, saveNow)
 		if err != nil {
+			workers.StartFileManager()
 			panic(err)
 		}
 	}()
@@ -50,6 +51,6 @@ func main() {
 			}()
 		}
 	}
-	wg.Wait()
+	//wg.Wait()
 
 }
